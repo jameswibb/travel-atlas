@@ -10,6 +10,7 @@ Read this file at the start of every session. Do not begin coding until you have
 - react-router-dom v7
 - localStorage (saved routes, no backend, no auth)
 - Vercel (deploy from GitHub)
+- vite.config.js has `resolve.dedupe: ['react','react-dom','leaflet']` — do not remove, fixes hook errors
 
 ## Project Structure
 
@@ -18,10 +19,22 @@ travel-atlas/
   public/
     campgrounds.json        ← static data, 3186 sites, loaded at runtime
   src/
-    App.jsx
-    complianceEngine.js     ← Phase 0 blocker: standalone, zero UI deps
+    App.jsx                 ← layout shell, top-level state
+    App.css                 ← all component styles
+    geocode.js              ← Nominatim search helper
+    complianceEngine.js     ← pure JS, zero UI deps
     complianceEngine.test.js
-    corridorFilter.js       ← Phase 0 spike: Haversine point-to-polyline
+    corridorFilter.js       ← Haversine point-to-polyline
+    hooks/
+      useCampgrounds.js     ← load + hard-filter campgrounds.json
+      useItinerary.js       ← useReducer for itinerary state
+      useSavedRoutes.js     ← localStorage TRAVEL_ATLAS_V1_ROUTES
+    components/
+      CampMap.jsx           ← Leaflet map, clustered markers, polyline
+      RouteForm.jsx         ← start/end/dates
+      FilterBar.jsx         ← corridor slider, hookup chips, toggles
+      LocationSearch.jsx    ← debounced Nominatim dropdown
+      ItineraryPanel.jsx    ← stops list, compliance alerts, gap warnings, save/load
   build_campgrounds.py      ← re-run to refresh campgrounds.json from My Maps
   patch_campgrounds.py      ← geocoding retry / cleanup utility
   CLAUDE.md                 ← this file
@@ -160,8 +173,6 @@ getLockoutState(stops, upToIndex)
 // returns: { fullSystemLockoutEnds: 'YYYY-MM-DD'|null, encoreLockoutEnds: 'YYYY-MM-DD'|null }
 ```
 
-All 5 rule combos plus the non-aggregation rule MUST pass unit tests before any UI work.
-
 ## Rig Profile
 
 | Field | Value |
@@ -170,20 +181,100 @@ All 5 rule combos plus the non-aggregation rule MUST pass unit tests before any 
 | Length | ~25 ft |
 | Height | 13 ft |
 | Party | Sir + Lady Sara + Biscuit + Roo (2 dogs) |
+| Max daily drive | ~4 hours / ~240 miles at 60 mph |
+| Fuel economy | ~7 MPG — default corridor narrow, widen on instruction |
 
 ## Won't Have — Do Not Build
 
-- Conversational Claude editing interface
+- Conversational Claude editing interface (v2)
 - Live API calls (Recreation.gov, TT, Harvest Hosts)
 - Scenic routing algorithm
 - Multi-user / auth / accounts
 - Weather, traffic, or fuel integrations
 - Mobile native app
+- Offline / PWA caching
 
 ## Build Order (phases)
 
-1. **Phase 0 (current):** complianceEngine.js passes all 5 unit tests + corridor spike passes visual check
-2. **Phase 1:** Core loop — route input, corridor filter, itinerary builder, night-coverage checker, compliance alerts wired to UI, save/load routes
-3. **Phase 2:** Polish — NP proximity flags, adaptive distance, corridor slider, mobile layout
+### Phase 0 — COMPLETE ✓
+- complianceEngine.js passes all 22 unit tests
+- corridorFilter.js corridor spike passes visual check (DC→Boston)
+- campgrounds.json: 3,186 sites, full schema
+- React 19 + Vite scaffold, full-screen Leaflet map confirmed
+- GitHub repo: github.com/jameswibb/travel-atlas
 
-Do not start Phase 1 until Phase 0 validation checkpoints are all green.
+### Phase 1 — COMPLETE ✓
+Core loop working:
+- Route input with Nominatim geocoding
+- Corridor filter wired to route, 25mi default
+- CampMap with clustered colour-coded markers
+- Itinerary builder: add/remove stops, +/- nights, date re-chaining
+- Compliance engine wired to itinerary, per-stop alerts
+- Gap warnings between stops
+- Save/load named routes via localStorage
+- Filter bar: corridor slider, hookup chips, FCFS/reservable toggles
+
+**Phase 1 items still to complete:**
+- [ ] Site detail card (currently tooltip only — need full card with hookups, amp, FCFS badge, Access Pass badge, stay limit, booking URL)
+- [ ] Night-coverage checker: `useNightCoverage.js` hook + persistent `NightCoverageIndicator.jsx` banner (always visible, green=covered, red=gaps with specific dates listed)
+- [ ] Print view — clean single-page itinerary summary for road use
+- [ ] TT 14-night maximum stay warning (display only)
+- [ ] End-to-end test: plan a real section of the east coast trip
+
+### Phase 2 — TODO
+Trip-ready polish:
+
+**NP proximity flags**
+- For each campground, calculate distance to nearest National Park from a static NPS coordinates list
+- Display badge on site cards for any NP within 50 miles
+- `nearby_national_parks` field already exists in schema (currently empty — needs populating or computing at render time)
+
+**Adaptive distance suggestions**
+- Calculate drive distance between consecutive stops (straight-line / 60mph)
+- Flag any leg exceeding 4 hours (~240 miles) on the itinerary
+- Track consecutive driving days for dynamic weighting (soft, can override)
+
+**Alternative campground suggestions**
+- On each stop card, show 3 nearby alternatives within the same corridor segment
+- Let Sir swap a stop from the shortlist
+
+**Suitability score** (Adventure Genie-inspired GenieScore)
+- Composite: hookup match + dog-friendly + reservable + NP proximity + Access Pass discount
+- Display as stars or numeric on site cards
+
+**Per-stop notes** (trivially easy, low priority)
+
+**GenieStops — suggested stops mode**
+- When route entered, pre-populate stop suggestions at ~3-4hr intervals
+- Let Sir replace any suggestion
+
+**Mobile responsive layout pass**
+- Sidebar must work on iPad/phone
+- Map + itinerary both accessible on small screens
+
+**Bug fix sprint**
+- Use Travel Atlas to plan the full July–November east coast route
+- Fix every friction point encountered
+
+### Phase 2 Validation Checkpoint (done when):
+Sir has planned the complete July–November east coast adventure in Travel Atlas, every night is covered, the compliance engine shows green across the full itinerary, and he is comfortable booking from it.
+
+## Competitive Context
+
+Adventure Genie (adventuregenie.com) is the closest competitor — AI RV planner, 25k+ campgrounds, drag-and-drop, GenieScore. Its structural gap: **zero TT/Encore membership support**. Travel Atlas's compliance engine is the exact feature Adventure Genie cannot provide.
+
+Features to adopt from Adventure Genie:
+- GenieScore suitability rating per site
+- Split-pane UI (map always visible) — done
+- Day-by-day itinerary view with explicit arrival/departure dates — done
+- GenieStops (suggested stops at 3-4hr intervals) — Phase 2
+- Favourite/bookmark sites (heart icon, localStorage) — Phase 2
+
+## Source Documents
+
+Full planning documents at:
+`C:\Users\Admin\Documents\MegaClaude\App Workshop\App Workshop\`
+- Travel_Atlas_Build_Plan.docx
+- Travel_Atlas_MVP_Scope.docx
+- Travel_Atlas_Requirements_Brief.docx
+- Travel_Atlas_Validation_Report.docx

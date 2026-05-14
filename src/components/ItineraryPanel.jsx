@@ -111,6 +111,13 @@ export default function ItineraryPanel({ itinerary, dispatch, route, saved, save
                   </a>
                 )}
 
+                {stop.nights >= 14 && (stop.campground.agency_type === 'TT' || stop.campground.agency_type === 'Encore') && (
+                  <div className="compliance-alert compliance-tt_stay_warning">
+                    <strong>⏱ 14-night limit approaching</strong>
+                    <p>TT/Encore max stay is 14 nights. Plan your departure.</p>
+                  </div>
+                )}
+
                 {violation && (
                   <div className={`compliance-alert compliance-${violation.violation_type.toLowerCase()}`}>
                     <strong>

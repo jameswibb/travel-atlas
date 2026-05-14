@@ -307,13 +307,13 @@
   flex-shrink: 0;
 }
 
-.agency-tt      { background: #ff6b35; }
-.agency-encore  { background: #9c27b0; }
-.agency-usfs    { background: #2d6a4f; }
-.agency-usace   { background: #1565c0; }
-.agency-blm     { background: #e65100; }
-.agency-nps     { background: #6a1b9a; }
-.agency-fws     { background: #558b2f; }
+.agency-tt      { background: #F57C00; }
+.agency-encore  { background: #0288D1; }
+.agency-usfs    { background: #006064; }
+.agency-usace   { background: #817717; }
+.agency-blm     { background: #FBC02D; color: #333; }
+.agency-nps     { background: #795548; }
+.agency-fws     { background: #0097A7; }
 
 /* ── Saved routes ───────────────────────────────────── */
 .saved-section { margin-top: 12px; border-top: 1px solid #f0f0f0; padding-top: 10px; }
@@ -349,3 +349,135 @@
 }
 
 .saved-name:hover { background: #f0f7ff; border-color: #90caf9; }
+
+/* ── Night Coverage Indicator ───────────────────────── */
+.coverage-bar {
+  margin: 0;
+  padding: 8px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 12px;
+}
+
+.coverage-ok { background: #e8f5e9; }
+.coverage-gap { background: #ffebee; }
+.coverage-partial { background: #fff8e1; }
+
+.coverage-summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.coverage-icon { font-size: 13px; }
+.coverage-text { font-weight: 600; flex: 1; }
+
+.coverage-gap-count {
+  font-size: 10px;
+  font-weight: 700;
+  background: #ef5350;
+  color: #fff;
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.coverage-gaps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 5px;
+}
+
+.gap-date {
+  font-size: 10px;
+  background: rgba(0,0,0,0.07);
+  border-radius: 3px;
+  padding: 1px 5px;
+  color: #c62828;
+}
+
+.gap-more { color: #888; background: transparent; }
+
+/* ── TT 14-night warning ────────────────────────────── */
+.compliance-tt_stay_warning { background: #fff8e1; border-left: 3px solid #ffb300; }
+
+/* ── Site popup (Leaflet) ───────────────────────────── */
+.site-popup { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 12px; }
+
+.site-popup-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 5px;
+}
+
+.site-popup-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 7px;
+  line-height: 1.3;
+}
+
+.badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.badge-pass { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+.badge-fcfs { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+
+.site-popup-details { margin-bottom: 8px; }
+
+.site-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  padding: 2px 0;
+  border-bottom: 1px solid #f5f5f5;
+  font-size: 11px;
+}
+
+.detail-label { color: #888; white-space: nowrap; }
+
+.site-popup-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.popup-book-link {
+  font-size: 11px;
+  color: #2196f3;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.popup-book-link:hover { text-decoration: underline; }
+
+.popup-add-btn {
+  flex: 1;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid #2196f3;
+  background: #2196f3;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.popup-add-btn:hover { background: #1976d2; }
+
+.popup-added {
+  flex: 1;
+  font-size: 11px;
+  color: #43a047;
+  font-weight: 600;
+  text-align: center;
+}
