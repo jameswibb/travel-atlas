@@ -9,7 +9,7 @@ import { useCampgrounds } from './hooks/useCampgrounds.js'
 import { useItinerary } from './hooks/useItinerary.js'
 import { useSavedRoutes } from './hooks/useSavedRoutes.js'
 import { useNightCoverage } from './hooks/useNightCoverage.js'
-import { useRoutePolyline } from './hooks/useRoutePolyline.js'
+import { useRoutePolyline, orsEnabled } from './hooks/useRoutePolyline.js'
 import { useFavorites } from './hooks/useFavorites.js'
 import './App.css'
 
@@ -52,6 +52,7 @@ export default function App() {
           <span className="logo-text">Travel Atlas</span>
           {loading && <span className="loading-badge">loading…</span>}
           {routeLoading && <span className="loading-badge">routing…</span>}
+          {orsEnabled && <span className="ors-badge" title="Height-aware routing active (13ft clearance)">⚠ 13ft</span>}
           <button className="close-sidebar-btn" onClick={() => setSidebarOpen(false)} aria-label="Close">✕</button>
         </div>
 
