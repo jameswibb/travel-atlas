@@ -1,4 +1,11 @@
 import { useState, useMemo } from 'react'
+import {
+  DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragOverlay,
+} from '@dnd-kit/core'
+import {
+  SortableContext, useSortable, verticalListSortingStrategy, arrayMove,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { checkCompliance } from '../complianceEngine.js'
 import { nightsBetween } from '../hooks/useItinerary.js'
 import { haversine } from '../corridorFilter.js'
@@ -73,6 +80,21 @@ function AlternativesPanel({ stop, campgrounds, itinerarySiteIds, onSwap }) {
   )
 }
 
+function SortableStopCard({ id, children }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  }
+  return (
+    <div ref={setNodeRef} style={style}>
+      <div className="drag-handle" {...attributes} {...listeners} title="Drag to reorder">⠿</div>
+      {children}
+    </div>
+  )
+}
+
 export default function ItineraryPanel({
   itinerary, dispatch, route, polyline, campgrounds,
   favorites, saved, saveRoute, deleteRoute, onLoadRoute,
@@ -81,6 +103,11 @@ export default function ItineraryPanel({
   const [expandedNotes, setExpandedNotes] = useState(new Set())
   const [expandedAlts, setExpandedAlts] = useState(null)
   const [generating, setGenerating] = useState(false)
+  const [activeId, setActiveId] = useState(null)
+
+  const sensors = useSensors(useSensor(PointerSensor, {
+    activationConstraint: { distance: 5 },
+  }))
 
   const complianceStops = stops.map(toComplianceStop)
   const violations = stops.length ? checkCompliance(complianceStops) : []
@@ -148,7 +175,17 @@ export default function ItineraryPanel({
     setExpandedAlts(null)
   }
 
+  function handleDragEnd(event) {
+    const { active, over } = event
+    setActiveId(null)
+    if (!over || active.id === over.id) return
+    const fromIdx = stops.findIndex((s) => s.stopId === active.id)
+    const toIdx = stops.findIndex((s) => s.stopId === over.id)
+    dispatch({ type: 'REORDER', fromIdx, toIdx })
+  }
+
   const canGenerate = polyline.length >= 2 && campgrounds?.length > 0
+  const activeStop = activeId ? stops.find((s) => s.stopId === activeId) : null
 
   return (
     <section className="panel-section itinerary-section">
@@ -188,6 +225,13 @@ export default function ItineraryPanel({
         </p>
       )}
 
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={({ active }) => setActiveId(active.id)}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext items={stops.map((s) => s.stopId)} strategy={verticalListSortingStrategy}>
       <div className="stop-list">
         {stops.map((stop, i) => {
           const violation = violationByIndex[i]
@@ -199,7 +243,7 @@ export default function ItineraryPanel({
           const score = genieScore(stop.campground)
 
           return (
-            <div key={stop.stopId}>
+            <SortableStopCard key={stop.stopId} id={stop.stopId}>
               <div className={`stop-card ${violation ? 'stop-card-violation' : ''}`}>
                 <div className="stop-card-header">
                   <span className={`agency-badge agency-${stop.campground.agency_type.toLowerCase()}`}>
@@ -309,10 +353,24 @@ export default function ItineraryPanel({
                   ⚠ {nightGap.nights} uncovered night{nightGap.nights !== 1 ? 's' : ''} before next stop
                 </div>
               )}
-            </div>
+            </SortableStopCard>
           )
         })}
       </div>
+        </SortableContext>
+        <DragOverlay>
+          {activeStop && (
+            <div className="stop-card drag-overlay-card">
+              <div className="stop-card-header">
+                <span className={`agency-badge agency-${activeStop.campground.agency_type.toLowerCase()}`}>
+                  {AGENCY_LABEL[activeStop.campground.agency_type] ?? activeStop.campground.agency_type}
+                </span>
+                <span className="stop-name">{activeStop.campground.name}</span>
+              </div>
+            </div>
+          )}
+        </DragOverlay>
+      </DndContext>
 
       {saved.length > 0 && (
         <div className="saved-section">

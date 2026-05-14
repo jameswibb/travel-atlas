@@ -741,6 +741,30 @@
   a { color: #000; text-decoration: none; }
 }
 
+/* ── Drag to reorder ─────────────────────────────────── */
+.drag-handle {
+  display: block;
+  text-align: center;
+  color: #ccc;
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 0;
+  cursor: grab;
+  user-select: none;
+  letter-spacing: 1px;
+}
+
+.drag-handle:hover { color: #888; }
+.drag-handle:active { cursor: grabbing; }
+
+.drag-overlay-card {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  background: #fff;
+  border-radius: 8px;
+  opacity: 0.95;
+  pointer-events: none;
+}
+
 /* ── Waypoints ───────────────────────────────────────── */
 .waypoint-row {
   display: flex;
