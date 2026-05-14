@@ -141,14 +141,7 @@ function SitePopup({ site, inItinerary, onAdd }) {
   )
 }
 
-export default function CampMap({ campgrounds, route, filters, itinerary, dispatch }) {
-  const polyline = useMemo(() => {
-    const pts = []
-    if (route.startLocation) pts.push([route.startLocation.lat, route.startLocation.lng])
-    for (const wp of (route.waypoints ?? [])) pts.push([wp.lat, wp.lng])
-    if (route.endLocation) pts.push([route.endLocation.lat, route.endLocation.lng])
-    return pts
-  }, [route])
+export default function CampMap({ campgrounds, polyline, filters, itinerary, dispatch, route }) {
 
   const visibleSites = useMemo(() => {
     if (polyline.length < 2) return []

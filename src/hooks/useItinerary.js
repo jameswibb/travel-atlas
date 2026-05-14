@@ -113,6 +113,19 @@ function reducer(state, action) {
       return { stops: action.stops }
     }
 
+    case 'LOAD_SUGGESTIONS': {
+      if (!action.campgrounds?.length) return state
+      const baseDate = action.tripStartDate ?? new Date().toISOString().slice(0, 10)
+      const existing = state.stops
+      const newStops = []
+      for (const cg of action.campgrounds) {
+        const prev = newStops.at(-1) ?? existing.at(-1)
+        const arrive = prev ? prev.departDate : baseDate
+        newStops.push(makeStop(cg, arrive))
+      }
+      return { stops: [...existing, ...newStops] }
+    }
+
     case 'CLEAR': {
       return { stops: [] }
     }

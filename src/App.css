@@ -481,3 +481,56 @@
   font-weight: 600;
   text-align: center;
 }
+
+/* ── Generate stops (GenieStops) ───────────────────── */
+.btn-genie {
+  background: #6a1b9a;
+  border-color: #6a1b9a;
+  color: #fff;
+}
+
+.btn-genie:hover { background: #4a148c; border-color: #4a148c; }
+.btn-genie:disabled { opacity: 0.6; cursor: wait; }
+
+/* ── Leg distance warning ───────────────────────────── */
+.leg-warning {
+  font-size: 11px;
+  color: #bf360c;
+  background: #fbe9e7;
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin-bottom: 6px;
+}
+
+/* ── Per-stop notes ─────────────────────────────────── */
+.notes-toggle {
+  display: block;
+  margin-top: 5px;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 11px;
+  color: #90a4ae;
+  cursor: pointer;
+  text-align: left;
+}
+
+.notes-toggle:hover { color: #546e7a; }
+
+.stop-notes {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 5px 7px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 48px;
+  box-sizing: border-box;
+  background: #fafafa;
+  color: #333;
+}
+
+.stop-notes:focus { outline: none; border-color: #2196f3; background: #fff; }

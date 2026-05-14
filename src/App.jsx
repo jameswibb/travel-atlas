@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import CampMap from './components/CampMap.jsx'
 import RouteForm from './components/RouteForm.jsx'
 import FilterBar from './components/FilterBar.jsx'
@@ -33,6 +33,14 @@ export default function App() {
   const { saved, saveRoute, deleteRoute } = useSavedRoutes()
   const coverage = useNightCoverage(itinerary, route.tripStartDate, route.tripEndDate)
 
+  const polyline = useMemo(() => {
+    const pts = []
+    if (route.startLocation) pts.push([route.startLocation.lat, route.startLocation.lng])
+    for (const wp of (route.waypoints ?? [])) pts.push([wp.lat, wp.lng])
+    if (route.endLocation) pts.push([route.endLocation.lat, route.endLocation.lng])
+    return pts
+  }, [route])
+
   function handleLoadRoute(saved) {
     setRoute(saved.route)
     dispatch({ type: 'LOAD', stops: saved.itinerary.stops })
@@ -58,6 +66,8 @@ export default function App() {
           itinerary={itinerary}
           dispatch={dispatch}
           route={route}
+          polyline={polyline}
+          campgrounds={campgrounds}
           saved={saved}
           saveRoute={saveRoute}
           deleteRoute={deleteRoute}
@@ -68,10 +78,11 @@ export default function App() {
       <main className="map-area">
         <CampMap
           campgrounds={campgrounds}
-          route={route}
+          polyline={polyline}
           filters={filters}
           itinerary={itinerary}
           dispatch={dispatch}
+          route={route}
         />
       </main>
     </div>
