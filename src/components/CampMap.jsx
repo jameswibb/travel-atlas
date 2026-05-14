@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Polyline, Marker, Popup, useMap } from 'react-
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import { divIcon } from 'leaflet'
 import { filterCorridor } from '../corridorFilter.js'
+import { nearestPark, genieScore } from '../utils/scorer.js'
 import 'leaflet/dist/leaflet.css'
 
 const EAST_COAST_CENTER = [37.5, -77.0]
@@ -73,7 +74,18 @@ function RouteFitter({ polyline }) {
 
 const HOOKUP_LABELS = { full: 'Full hookups', electric: 'Electric', water: 'Water', sewer: 'Sewer', none: 'Dry camping' }
 
+function ScoreDots({ score }) {
+  return (
+    <span className="genie-score-dots">
+      {'●'.repeat(score)}{'○'.repeat(5 - score)}
+    </span>
+  )
+}
+
 function SitePopup({ site, inItinerary, onAdd }) {
+  const np = nearestPark(site)
+  const score = genieScore(site)
+
   return (
     <div className="site-popup">
       <div className="site-popup-header">
@@ -86,10 +98,17 @@ function SitePopup({ site, inItinerary, onAdd }) {
         {!site.is_reservable && (
           <span className="badge badge-fcfs">FCFS</span>
         )}
+        {np.miles <= 50 && (
+          <span className="badge badge-np" title={`${np.park.name} — ${np.miles}mi`}>NP</span>
+        )}
       </div>
       <div className="site-popup-name">{site.name}</div>
 
       <div className="site-popup-details">
+        <div className="site-detail-row">
+          <span className="detail-label">Score</span>
+          <ScoreDots score={score} />
+        </div>
         <div className="site-detail-row">
           <span className="detail-label">Hookups</span>
           <span>{site.hookup_types.map((h) => HOOKUP_LABELS[h] ?? h).join(', ')}</span>
@@ -116,6 +135,12 @@ function SitePopup({ site, inItinerary, onAdd }) {
           <div className="site-detail-row">
             <span className="detail-label">Clearance</span>
             <span>{site.height_clearance_ft} ft</span>
+          </div>
+        )}
+        {np.miles <= 50 && (
+          <div className="site-detail-row">
+            <span className="detail-label">Near NP</span>
+            <span>{np.park.name} ({np.miles}mi)</span>
           </div>
         )}
         {site.distanceMiles != null && (

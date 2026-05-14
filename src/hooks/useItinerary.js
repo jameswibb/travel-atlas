@@ -113,6 +113,14 @@ function reducer(state, action) {
       return { stops: action.stops }
     }
 
+    case 'SWAP_STOP': {
+      return {
+        stops: state.stops.map((s) =>
+          s.stopId === action.stopId ? { ...s, campground: action.campground } : s,
+        ),
+      }
+    }
+
     case 'LOAD_SUGGESTIONS': {
       if (!action.campgrounds?.length) return state
       const baseDate = action.tripStartDate ?? new Date().toISOString().slice(0, 10)

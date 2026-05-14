@@ -1,15 +1,18 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { checkCompliance } from '../complianceEngine.js'
 import { nightsBetween } from '../hooks/useItinerary.js'
 import { haversine } from '../corridorFilter.js'
 import { suggestStops } from '../hooks/useGenieStops.js'
+import { nearestPark, genieScore, genieScoreRaw } from '../utils/scorer.js'
 
-const MAX_DRIVE_MILES = 240  // ~4hr at 60 mph
+const MAX_DRIVE_MILES = 240
 
 const AGENCY_LABEL = {
   TT: 'TT', Encore: 'Encore', USFS: 'USFS', USACE: 'USACE',
   BLM: 'BLM', NPS: 'NPS', FWS: 'FWS',
 }
+
+const HOOKUP_SHORT = { full: 'Full', electric: 'Electric', water: 'Water', none: 'Dry' }
 
 function toComplianceStop(s) {
   return {
@@ -29,26 +32,71 @@ function formatDate(d) {
   })
 }
 
+function ScoreDots({ score }) {
+  return <span className="genie-score-dots">{'●'.repeat(score)}{'○'.repeat(5 - score)}</span>
+}
+
+function AlternativesPanel({ stop, campgrounds, itinerarySiteIds, onSwap }) {
+  const alts = useMemo(() => {
+    const pos = [stop.campground.lat, stop.campground.lng]
+    return campgrounds
+      .filter((c) => c.site_id !== stop.campground.site_id && !itinerarySiteIds.has(c.site_id))
+      .map((c) => ({ c, dist: haversine(pos, [c.lat, c.lng]) }))
+      .filter(({ dist }) => dist <= 40)
+      .map(({ c, dist }) => ({ ...c, _dist: dist, _score: genieScoreRaw(c) }))
+      .sort((a, b) => b._score - a._score || a._dist - b._dist)
+      .slice(0, 3)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stop.campground.site_id, campgrounds])
+
+  if (!alts.length) return <div className="no-alts">No alternatives within 40mi</div>
+
+  return (
+    <div className="alternatives-panel">
+      {alts.map((alt) => (
+        <div key={alt.site_id} className="alt-row">
+          <span className={`agency-badge agency-${alt.agency_type.toLowerCase()}`}>
+            {AGENCY_LABEL[alt.agency_type] ?? alt.agency_type}
+          </span>
+          <div className="alt-info">
+            <div className="alt-name">{alt.name}</div>
+            <div className="alt-meta">
+              {alt.hookup_types.map((h) => HOOKUP_SHORT[h] ?? h).join(', ')}
+              {' · '}{Math.round(alt._dist)}mi
+              {' · '}<ScoreDots score={genieScore(alt)} />
+            </div>
+          </div>
+          <button className="alt-use-btn" onClick={() => onSwap(alt)}>Use</button>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function ItineraryPanel({
   itinerary, dispatch, route, polyline, campgrounds,
   saved, saveRoute, deleteRoute, onLoadRoute,
 }) {
   const { stops } = itinerary
   const [expandedNotes, setExpandedNotes] = useState(new Set())
+  const [expandedAlts, setExpandedAlts] = useState(null)
   const [generating, setGenerating] = useState(false)
 
   const complianceStops = stops.map(toComplianceStop)
   const violations = stops.length ? checkCompliance(complianceStops) : []
   const violationByIndex = Object.fromEntries(violations.map((v) => [v.stop_index, v]))
 
-  // Night gaps between consecutive stops
+  const itinerarySiteIds = useMemo(
+    () => new Set(stops.map((s) => s.campground.site_id)),
+    [stops],
+  )
+
   const nightGaps = []
   for (let i = 0; i < stops.length - 1; i++) {
     const gap = nightsBetween(stops[i].departDate, stops[i + 1].arriveDate)
     if (gap > 0) nightGaps.push({ before: i, nights: gap })
   }
 
-  // Drive distance between consecutive stops (straight-line haversine)
   const driveWarnings = []
   for (let i = 0; i < stops.length - 1; i++) {
     const mi = Math.round(haversine(
@@ -66,6 +114,10 @@ export default function ItineraryPanel({
     })
   }
 
+  function toggleAlts(stopId) {
+    setExpandedAlts((prev) => (prev === stopId ? null : stopId))
+  }
+
   function handleSave() {
     const name = prompt('Route name:')
     if (!name) return
@@ -74,7 +126,7 @@ export default function ItineraryPanel({
 
   function handleGenerate() {
     if (stops.length > 0) {
-      if (!window.confirm(`Replace your ${stops.length} existing stop${stops.length !== 1 ? 's' : ''} with generated stops?`)) return
+      if (!window.confirm(`Replace ${stops.length} existing stop${stops.length !== 1 ? 's' : ''} with generated stops?`)) return
       dispatch({ type: 'CLEAR' })
     }
     setGenerating(true)
@@ -89,6 +141,11 @@ export default function ItineraryPanel({
       campgrounds: suggestions.map((s) => s.campground),
       tripStartDate: route.tripStartDate,
     })
+  }
+
+  function handleSwap(stop, newCampground) {
+    dispatch({ type: 'SWAP_STOP', stopId: stop.stopId, campground: newCampground })
+    setExpandedAlts(null)
   }
 
   const canGenerate = polyline.length >= 2 && campgrounds?.length > 0
@@ -106,17 +163,16 @@ export default function ItineraryPanel({
         </h3>
         <div className="itinerary-actions">
           {canGenerate && (
-            <button
-              className="btn-sm btn-genie"
-              onClick={handleGenerate}
-              disabled={generating}
-              title="Auto-suggest stops at ~200mi intervals"
-            >
+            <button className="btn-sm btn-genie" onClick={handleGenerate} disabled={generating}
+              title="Auto-suggest stops at ~200mi intervals">
               {generating ? '…' : '✦ Generate'}
             </button>
           )}
           {stops.length > 0 && (
             <button className="btn-sm" onClick={handleSave}>Save</button>
+          )}
+          {stops.length > 0 && (
+            <button className="btn-sm btn-ghost" onClick={() => window.print()} title="Print itinerary">⎙</button>
           )}
           {stops.length > 0 && (
             <button className="btn-sm btn-ghost" onClick={() => dispatch({ type: 'CLEAR' })}>Clear</button>
@@ -138,6 +194,9 @@ export default function ItineraryPanel({
           const nightGap = nightGaps.find((g) => g.before === i)
           const driveWarn = driveWarnings.find((g) => g.before === i)
           const notesOpen = expandedNotes.has(stop.stopId)
+          const altsOpen = expandedAlts === stop.stopId
+          const np = nearestPark(stop.campground)
+          const score = genieScore(stop.campground)
 
           return (
             <div key={stop.stopId}>
@@ -146,21 +205,30 @@ export default function ItineraryPanel({
                   <span className={`agency-badge agency-${stop.campground.agency_type.toLowerCase()}`}>
                     {AGENCY_LABEL[stop.campground.agency_type] ?? stop.campground.agency_type}
                   </span>
+                  {np.miles <= 50 && (
+                    <span className="badge badge-np" title={`${np.park.name} — ${np.miles}mi`}>NP</span>
+                  )}
                   <span className="stop-name">{stop.campground.name}</span>
-                  <button
-                    className="remove-btn"
-                    onClick={() => dispatch({ type: 'REMOVE_STOP', stopId: stop.stopId })}
-                    title="Remove stop"
-                  >×</button>
+                  <button className="swap-btn" onClick={() => toggleAlts(stop.stopId)} title="Swap campground">
+                    {altsOpen ? '▲' : '↕'}
+                  </button>
+                  <button className="remove-btn" onClick={() => dispatch({ type: 'REMOVE_STOP', stopId: stop.stopId })}
+                    title="Remove stop">×</button>
+                </div>
+
+                <div className="stop-score-row">
+                  <ScoreDots score={score} />
+                  {stop.campground.hookup_types?.length > 0 && (
+                    <span className="stop-hookup-hint">
+                      {stop.campground.hookup_types.map((h) => HOOKUP_SHORT[h] ?? h).join(' · ')}
+                    </span>
+                  )}
                 </div>
 
                 <div className="stop-dates">
                   <div className="field-group-inline">
                     <label className="field-label">Arrive</label>
-                    <input
-                      type="date"
-                      className="date-input"
-                      value={stop.arriveDate}
+                    <input type="date" className="date-input" value={stop.arriveDate}
                       onChange={(e) => dispatch({ type: 'SET_ARRIVE_DATE', stopId: stop.stopId, date: e.target.value })}
                     />
                   </div>
@@ -178,19 +246,25 @@ export default function ItineraryPanel({
                   </a>
                 )}
 
-                <button
-                  className="notes-toggle"
-                  onClick={() => toggleNotes(stop.stopId)}
-                >
-                  {notesOpen ? '▲ Notes' : stop.notes ? `▼ Note: ${stop.notes.slice(0, 30)}${stop.notes.length > 30 ? '…' : ''}` : '+ Add note'}
+                <button className="notes-toggle" onClick={() => toggleNotes(stop.stopId)}>
+                  {notesOpen ? '▲ Notes'
+                    : stop.notes ? `▼ Note: ${stop.notes.slice(0, 30)}${stop.notes.length > 30 ? '…' : ''}`
+                    : '+ Add note'}
                 </button>
 
                 {notesOpen && (
-                  <textarea
-                    className="stop-notes"
-                    placeholder="Notes for this stop…"
+                  <textarea className="stop-notes" placeholder="Notes for this stop…"
                     value={stop.notes}
                     onChange={(e) => dispatch({ type: 'SET_NOTES', stopId: stop.stopId, notes: e.target.value })}
+                  />
+                )}
+
+                {altsOpen && (
+                  <AlternativesPanel
+                    stop={stop}
+                    campgrounds={campgrounds}
+                    itinerarySiteIds={itinerarySiteIds}
+                    onSwap={(alt) => handleSwap(stop, alt)}
                   />
                 )}
 
@@ -214,7 +288,6 @@ export default function ItineraryPanel({
                 )}
               </div>
 
-              {/* Between-stop warnings */}
               {driveWarn && (
                 <div className="leg-warning">
                   🚗 {driveWarn.miles} mi to next stop — over 4-hour drive
@@ -230,7 +303,6 @@ export default function ItineraryPanel({
         })}
       </div>
 
-      {/* Saved routes */}
       {saved.length > 0 && (
         <div className="saved-section">
           <h4 className="saved-title">Saved Routes</h4>

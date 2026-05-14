@@ -1,4 +1,5 @@
 import { haversine } from '../corridorFilter.js'
+import { genieScoreRaw } from '../utils/scorer.js'
 
 const INTERVAL_MILES = 200  // ~3.3hr at 60 mph
 
@@ -25,15 +26,7 @@ function interpolateAlongPolyline(polyline, targetMiles) {
 }
 
 function scoreSite(site, dist) {
-  let score = 0
-  if (site.agency_type === 'TT' || site.agency_type === 'Encore') score += 20
-  if (site.hookup_types?.includes('full')) score += 10
-  else if (site.hookup_types?.includes('electric')) score += 7
-  else if (site.hookup_types?.includes('water')) score += 5
-  if (site.is_reservable) score += 5
-  if (site.access_pass_discount) score += 3
-  score -= dist * 0.5  // distance penalty
-  return score
+  return genieScoreRaw(site) * 10 - dist * 0.5
 }
 
 /**

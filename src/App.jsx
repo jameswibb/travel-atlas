@@ -29,6 +29,7 @@ const DEFAULT_FILTERS = {
 export default function App() {
   const [route, setRoute] = useState(DEFAULT_ROUTE)
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const { campgrounds, loading } = useCampgrounds()
   const { itinerary, dispatch } = useItinerary()
   const { saved, saveRoute, deleteRoute } = useSavedRoutes()
@@ -42,12 +43,13 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <aside className="sidebar">
+      <aside className={`sidebar${sidebarOpen ? ' sidebar-open' : ''}`}>
         <div className="sidebar-logo">
           <span className="logo-icon">🗺</span>
           <span className="logo-text">Travel Atlas</span>
           {loading && <span className="loading-badge">loading…</span>}
           {routeLoading && <span className="loading-badge">routing…</span>}
+          <button className="close-sidebar-btn" onClick={() => setSidebarOpen(false)} aria-label="Close">✕</button>
         </div>
 
         <RouteForm route={route} setRoute={setRoute} />
@@ -71,6 +73,7 @@ export default function App() {
       </aside>
 
       <main className="map-area">
+        <button className="open-sidebar-btn" onClick={() => setSidebarOpen(true)}>☰ Plan</button>
         <CampMap
           campgrounds={campgrounds}
           polyline={polyline}
