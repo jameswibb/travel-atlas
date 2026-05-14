@@ -4,11 +4,13 @@ import RouteForm from './components/RouteForm.jsx'
 import FilterBar from './components/FilterBar.jsx'
 import ItineraryPanel from './components/ItineraryPanel.jsx'
 import NightCoverageIndicator from './components/NightCoverageIndicator.jsx'
+import TripStatsPanel from './components/TripStatsPanel.jsx'
 import { useCampgrounds } from './hooks/useCampgrounds.js'
 import { useItinerary } from './hooks/useItinerary.js'
 import { useSavedRoutes } from './hooks/useSavedRoutes.js'
 import { useNightCoverage } from './hooks/useNightCoverage.js'
 import { useRoutePolyline } from './hooks/useRoutePolyline.js'
+import { useFavorites } from './hooks/useFavorites.js'
 import './App.css'
 
 const DEFAULT_ROUTE = {
@@ -34,7 +36,8 @@ export default function App() {
   const { itinerary, dispatch } = useItinerary()
   const { saved, saveRoute, deleteRoute } = useSavedRoutes()
   const coverage = useNightCoverage(itinerary, route.tripStartDate, route.tripEndDate)
-  const { polyline, routeLoading } = useRoutePolyline(route)
+  const { polyline, routeLoading, routeDistanceMiles, routeDurationHours } = useRoutePolyline(route)
+  const { favorites, toggle: toggleFavorite } = useFavorites()
 
   function handleLoadRoute(saved) {
     setRoute(saved.route)
@@ -54,6 +57,12 @@ export default function App() {
 
         <RouteForm route={route} setRoute={setRoute} />
         <FilterBar filters={filters} setFilters={setFilters} />
+        <TripStatsPanel
+          routeDistanceMiles={routeDistanceMiles}
+          routeDurationHours={routeDurationHours}
+          itinerary={itinerary}
+          route={route}
+        />
         <NightCoverageIndicator
           coverage={coverage}
           tripStartDate={route.tripStartDate}
@@ -65,6 +74,7 @@ export default function App() {
           route={route}
           polyline={polyline}
           campgrounds={campgrounds}
+          favorites={favorites}
           saved={saved}
           saveRoute={saveRoute}
           deleteRoute={deleteRoute}
@@ -81,6 +91,8 @@ export default function App() {
           itinerary={itinerary}
           dispatch={dispatch}
           route={route}
+          favorites={favorites}
+          toggleFavorite={toggleFavorite}
         />
       </main>
     </div>

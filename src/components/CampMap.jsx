@@ -82,7 +82,7 @@ function ScoreDots({ score }) {
   )
 }
 
-function SitePopup({ site, inItinerary, onAdd }) {
+function SitePopup({ site, inItinerary, isFavorite, onAdd, onToggleFavorite }) {
   const np = nearestPark(site)
   const score = genieScore(site)
 
@@ -152,24 +152,34 @@ function SitePopup({ site, inItinerary, onAdd }) {
       </div>
 
       <div className="site-popup-actions">
+        <a
+          className="popup-nav-link"
+          href={`https://www.google.com/maps/dir/?api=1&destination=${site.lat},${site.lng}`}
+          target="_blank"
+          rel="noreferrer"
+          title="Open in Google Maps"
+        >Navigate ↗</a>
         {site.booking_url && (
           <a className="popup-book-link" href={site.booking_url} target="_blank" rel="noreferrer">
             Reserve ↗
           </a>
         )}
+        <button
+          className={`popup-fav-btn ${isFavorite ? 'fav-on' : ''}`}
+          onClick={onToggleFavorite}
+          title={isFavorite ? 'Remove from favourites' : 'Add to favourites'}
+        >{isFavorite ? '♥' : '♡'}</button>
         {inItinerary ? (
-          <span className="popup-added">✓ In itinerary</span>
+          <span className="popup-added">✓ Added</span>
         ) : (
-          <button className="popup-add-btn" onClick={onAdd}>
-            + Add to itinerary
-          </button>
+          <button className="popup-add-btn" onClick={onAdd}>+ Add</button>
         )}
       </div>
     </div>
   )
 }
 
-export default function CampMap({ campgrounds, polyline, filters, itinerary, dispatch, route }) {
+export default function CampMap({ campgrounds, polyline, filters, itinerary, dispatch, route, favorites, toggleFavorite }) {
 
   const visibleSites = useMemo(() => {
     if (polyline.length < 2) return []
@@ -208,17 +218,20 @@ export default function CampMap({ campgrounds, polyline, filters, itinerary, dis
       <MarkerClusterGroup chunkedLoading>
         {visibleSites.map((site) => {
           const inItinerary = itinerarySiteIds.has(site.site_id)
+          const isFavorite = favorites?.has(site.site_id) ?? false
           return (
             <Marker
               key={site.site_id}
               position={[site.lat, site.lng]}
               icon={makePinIcon(site.agency_type, inItinerary)}
             >
-              <Popup minWidth={220} maxWidth={280}>
+              <Popup minWidth={230} maxWidth={290}>
                 <SitePopup
                   site={site}
                   inItinerary={inItinerary}
+                  isFavorite={isFavorite}
                   onAdd={() => handleAdd(site)}
+                  onToggleFavorite={() => toggleFavorite?.(site.site_id)}
                 />
               </Popup>
             </Marker>

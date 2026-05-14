@@ -75,7 +75,7 @@ function AlternativesPanel({ stop, campgrounds, itinerarySiteIds, onSwap }) {
 
 export default function ItineraryPanel({
   itinerary, dispatch, route, polyline, campgrounds,
-  saved, saveRoute, deleteRoute, onLoadRoute,
+  favorites, saved, saveRoute, deleteRoute, onLoadRoute,
 }) {
   const { stops } = itinerary
   const [expandedNotes, setExpandedNotes] = useState(new Set())
@@ -240,11 +240,22 @@ export default function ItineraryPanel({
                   <span className="depart-label">→ {formatDate(stop.departDate)}</span>
                 </div>
 
-                {stop.campground.booking_url && (
-                  <a className="booking-link" href={stop.campground.booking_url} target="_blank" rel="noreferrer">
-                    Reserve ↗
-                  </a>
-                )}
+                <div className="stop-links">
+                  <a
+                    className="stop-link stop-link-nav"
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${stop.campground.lat},${stop.campground.lng}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >Navigate ↗</a>
+                  {stop.campground.booking_url && (
+                    <a className="stop-link" href={stop.campground.booking_url} target="_blank" rel="noreferrer">
+                      Reserve ↗
+                    </a>
+                  )}
+                  {favorites?.has(stop.campground.site_id) && (
+                    <span className="stop-fav-badge">♥ Saved</span>
+                  )}
+                </div>
 
                 <button className="notes-toggle" onClick={() => toggleNotes(stop.stopId)}>
                   {notesOpen ? '▲ Notes'

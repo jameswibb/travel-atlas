@@ -475,12 +475,32 @@
 .popup-add-btn:hover { background: #1976d2; }
 
 .popup-added {
-  flex: 1;
   font-size: 11px;
   color: #43a047;
   font-weight: 600;
-  text-align: center;
 }
+
+.popup-nav-link {
+  font-size: 11px;
+  color: #546e7a;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.popup-nav-link:hover { text-decoration: underline; }
+
+.popup-fav-btn {
+  background: none;
+  border: none;
+  font-size: 15px;
+  cursor: pointer;
+  color: #ccc;
+  padding: 0;
+  line-height: 1;
+}
+
+.popup-fav-btn.fav-on { color: #e53935; }
+.popup-fav-btn:hover { color: #e53935; }
 
 /* ── Generate stops (GenieStops) ───────────────────── */
 .btn-genie {
@@ -713,4 +733,180 @@
   .stop-card-violation { border-color: #ef9a9a !important; }
 
   a { color: #000; text-decoration: none; }
+}
+
+/* ── Waypoints ───────────────────────────────────────── */
+.waypoint-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.waypoint-search { flex: 1; }
+
+.remove-waypoint-btn {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #bbb;
+  cursor: pointer;
+  padding: 2px 4px;
+  line-height: 1;
+}
+
+.remove-waypoint-btn:hover { color: #e53935; }
+
+.add-waypoint-btn {
+  display: block;
+  width: 100%;
+  margin-top: 2px;
+  margin-bottom: 6px;
+  background: none;
+  border: 1px dashed #ccc;
+  border-radius: 4px;
+  color: #888;
+  font-size: 11px;
+  padding: 4px 8px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.add-waypoint-btn:hover { border-color: #2196f3; color: #2196f3; }
+
+/* ── Trip Stats Panel ────────────────────────────────── */
+.stats-panel { background: #fafcff; }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.stat-item {
+  background: #fff;
+  border: 1px solid #e8edf5;
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a2e;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 10px;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.fuel-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  margin-bottom: 10px;
+  color: #555;
+}
+
+.fuel-label { font-weight: 600; color: #1a1a2e; }
+.fuel-value { font-weight: 700; color: #2e7d32; font-size: 14px; }
+.fuel-hint { color: #aaa; font-size: 11px; }
+
+.fuel-price-wrap {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  font-size: 12px;
+  color: #555;
+}
+
+.fuel-price-input {
+  width: 42px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  padding: 1px 3px;
+  font-size: 12px;
+  text-align: right;
+  -moz-appearance: textfield;
+}
+
+.fuel-price-input::-webkit-inner-spin-button,
+.fuel-price-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+.nights-breakdown { display: flex; flex-direction: column; gap: 5px; }
+
+.nights-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nights-bar-label {
+  font-size: 10px;
+  font-weight: 700;
+  width: 36px;
+  flex-shrink: 0;
+}
+
+.nights-bar-track {
+  flex: 1;
+  height: 6px;
+  background: #eee;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.nights-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.nights-bar-count {
+  font-size: 10px;
+  color: #888;
+  width: 22px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── Stop links (nav / reserve / fav) ───────────────── */
+.stop-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 4px 0;
+}
+
+.stop-link {
+  font-size: 11px;
+  color: #1565c0;
+  text-decoration: none;
+  padding: 2px 6px;
+  border: 1px solid #bbdefb;
+  border-radius: 3px;
+  background: #e3f2fd;
+}
+
+.stop-link:hover { background: #2196f3; color: #fff; border-color: #2196f3; }
+
+.stop-link-nav { background: #e8f5e9; border-color: #c8e6c9; color: #2e7d32; }
+.stop-link-nav:hover { background: #388e3c; color: #fff; border-color: #388e3c; }
+
+.stop-fav-badge {
+  font-size: 11px;
+  color: #e53935;
+  margin-left: auto;
 }
