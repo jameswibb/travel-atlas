@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import CampMap from './components/CampMap.jsx'
 import RouteForm from './components/RouteForm.jsx'
 import FilterBar from './components/FilterBar.jsx'
@@ -8,6 +8,7 @@ import { useCampgrounds } from './hooks/useCampgrounds.js'
 import { useItinerary } from './hooks/useItinerary.js'
 import { useSavedRoutes } from './hooks/useSavedRoutes.js'
 import { useNightCoverage } from './hooks/useNightCoverage.js'
+import { useRoutePolyline } from './hooks/useRoutePolyline.js'
 import './App.css'
 
 const DEFAULT_ROUTE = {
@@ -32,14 +33,7 @@ export default function App() {
   const { itinerary, dispatch } = useItinerary()
   const { saved, saveRoute, deleteRoute } = useSavedRoutes()
   const coverage = useNightCoverage(itinerary, route.tripStartDate, route.tripEndDate)
-
-  const polyline = useMemo(() => {
-    const pts = []
-    if (route.startLocation) pts.push([route.startLocation.lat, route.startLocation.lng])
-    for (const wp of (route.waypoints ?? [])) pts.push([wp.lat, wp.lng])
-    if (route.endLocation) pts.push([route.endLocation.lat, route.endLocation.lng])
-    return pts
-  }, [route])
+  const { polyline, routeLoading } = useRoutePolyline(route)
 
   function handleLoadRoute(saved) {
     setRoute(saved.route)
@@ -53,6 +47,7 @@ export default function App() {
           <span className="logo-icon">🗺</span>
           <span className="logo-text">Travel Atlas</span>
           {loading && <span className="loading-badge">loading…</span>}
+          {routeLoading && <span className="loading-badge">routing…</span>}
         </div>
 
         <RouteForm route={route} setRoute={setRoute} />
