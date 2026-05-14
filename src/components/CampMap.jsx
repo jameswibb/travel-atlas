@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from 'react'
+import { useMemo, useCallback, useEffect } from 'react'
 import { MapContainer, TileLayer, Polyline, Marker, Popup, useMap } from 'react-leaflet'
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import { divIcon } from 'leaflet'
@@ -58,10 +58,13 @@ function makePinIcon(agencyType, inItinerary) {
 
 function RouteFitter({ polyline }) {
   const map = useMap()
-  const key = polyline.map((p) => p.join(',')).join('|')
-  useMemo(() => {
+  // Key on endpoints only — not the full OSRM geometry (could be 1000+ points)
+  const key = polyline.length >= 2
+    ? `${polyline[0].join(',')}_${polyline[polyline.length - 1].join(',')}`
+    : ''
+  useEffect(() => {
     if (polyline.length >= 2) {
-      map.fitBounds(polyline, { padding: [60, 60] })
+      map.fitBounds(polyline, { padding: [60, 60], animate: false })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key])

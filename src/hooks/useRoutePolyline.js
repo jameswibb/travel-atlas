@@ -5,7 +5,7 @@ const OSRM_BASE = 'https://router.project-osrm.org/route/v1/driving'
 
 function buildUrl(points) {
   const coords = points.map(({ lat, lng }) => `${lng},${lat}`).join(';')
-  return `${OSRM_BASE}/${coords}?overview=full&geometries=geojson`
+  return `${OSRM_BASE}/${coords}?overview=simplified&geometries=geojson`
 }
 
 // OSRM returns [lng, lat]; Leaflet needs [lat, lng]
